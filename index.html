@@ -1,169 +1,1056 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sprint Tracker (Local Storage)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .today-card { 
-            border: 2px solid #3b82f6; 
-            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); 
-        }
-    </style>
-</head>
-<body class="bg-gray-900 text-gray-100 font-sans min-h-screen pb-12">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rajveer Singh - 50-Day Mock Test Sprint Tracker</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
-    <!-- Top Navigation Dashboard -->
-    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 px-4 py-4 shadow-md">
-        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div>
-                <h1 class="text-xl font-bold text-white tracking-wide">⚡ LOCAL SPRINT TRACKER</h1>
-                <p class="text-xs text-green-400 font-mono">● Active Mode: Local Browser Autosave</p>
-            </div>
-            
-            <!-- Sprint Length Controller -->
-            <div class="flex items-center gap-2 bg-gray-950 p-1.5 rounded-lg border border-gray-700">
-                <span class="text-xs text-gray-400 px-2">Sprint Days:</span>
-                <select id="sprintDaysSelect" onchange="changeSprintLength(this.value)" class="bg-gray-900 text-xs text-white rounded px-2 py-1 border border-gray-700 focus:outline-none focus:border-blue-500">
-                    <option value="10">10 Days</option>
-                    <option value="30" selected>30 Days</option>
-                    <option value="45">45 Days</option>
-                    <option value="60">60 Days</option>
-                </select>
-            </div>
-        </div>
+  <style>
+    /* -------------------------------------------------------------
+       CUSTOM PROPERTIES & RESET
+    ------------------------------------------------------------- */
+    :root {
+      --bg-main: #0A0C18;
+      --card-bg: rgba(20, 24, 46, 0.65);
+      --card-bg-nested: rgba(30, 37, 68, 0.5);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #22D3EE;
+      
+      --text-primary: #F3F4F6;
+      --text-secondary: #9CA3AF;
+      --text-muted: #6B7280;
+      
+      --color-violet: #8B5CF6;
+      --color-cyan: #22D3EE;
+      --color-pink: #F472B6;
+      --color-success: #10B981;
+      --color-success-glow: rgba(16, 185, 129, 0.25);
+
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+      padding-bottom: 4rem;
+    }
+
+    /* -------------------------------------------------------------
+       BACKGROUND ANIMATED BLOBS
+    ------------------------------------------------------------- */
+    .blob-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -2;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .blob {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.25;
+      mix-blend-mode: screen;
+    }
+
+    .blob-1 {
+      background: var(--color-violet);
+      top: -10%;
+      left: -10%;
+      animation: float-blob-1 25s infinite alternate ease-in-out;
+    }
+
+    .blob-2 {
+      background: var(--color-cyan);
+      bottom: -10%;
+      right: -10%;
+      animation: float-blob-2 30s infinite alternate ease-in-out;
+    }
+
+    .blob-3 {
+      background: var(--color-pink);
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: float-blob-3 28s infinite alternate ease-in-out;
+    }
+
+    @keyframes float-blob-1 {
+      0% { transform: translate(0px, 0px) scale(1); }
+      50% { transform: translate(80px, 60px) scale(1.1); }
+      100% { transform: translate(-40px, 120px) scale(0.9); }
+    }
+
+    @keyframes float-blob-2 {
+      0% { transform: translate(0px, 0px) scale(1); }
+      50% { transform: translate(-100px, -80px) scale(0.9); }
+      100% { transform: translate(50px, -40px) scale(1.15); }
+    }
+
+    @keyframes float-blob-3 {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-40%, -60%) scale(1.05); }
+      100% { transform: translate(-60%, -40%) scale(0.95); }
+    }
+
+    /* Respect Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+      .blob, .gradient-text, .day-card, .stat-tile, .btn-export {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+      }
+    }
+
+    /* -------------------------------------------------------------
+       CONTAINER & HEADER
+    ------------------------------------------------------------- */
+    .app-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      color: var(--color-cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .gradient-text {
+      font-family: var(--font-display);
+      font-size: 2.75rem;
+      font-weight: 700;
+      background: linear-gradient(to right, #8B5CF6, #22D3EE, #F472B6, #8B5CF6);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: textShimmer 6s linear infinite;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    @keyframes textShimmer {
+      to { background-position: 200% center; }
+    }
+
+    .date-span {
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    /* -------------------------------------------------------------
+       DASHBOARD PLATFORM (TOP TILES)
+    ------------------------------------------------------------- */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (min-width: 768px) {
+      .dashboard {
+        grid-template-columns: 1.2fr 2fr;
+      }
+    }
+
+    /* Glass Panels Basis */
+    .glass-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    /* Circular Progress Graphic Widget */
+    .progress-ring-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1.5rem;
+    }
+
+    .ring-container {
+      position: relative;
+      width: 140px;
+      height: 140px;
+      margin-bottom: 1rem;
+    }
+
+    .ring-svg {
+      transform: rotate(-90deg);
+      width: 140px;
+      height: 140px;
+    }
+
+    .ring-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.05);
+      stroke-width: 10;
+    }
+
+    .ring-fill {
+      fill: none;
+      stroke: url(#ring-gradient);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 408.4; /* 2 * pi * r (r=65) */
+      stroke-dashoffset: 408.4;
+      transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .ring-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--font-mono);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .ring-label {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    /* Analytics Tiles Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 480px) {
+      .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .stat-tile {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .stat-tile:hover {
+      transform: translateY(-4px);
+      border-color: rgba(34, 211, 238, 0.3);
+    }
+
+    .stat-val {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-tile:nth-child(1) .stat-val { color: var(--color-violet); }
+    .stat-tile:nth-child(2) .stat-val { color: var(--color-cyan); }
+    .stat-tile:nth-child(3) .stat-val { color: var(--color-pink); }
+
+    .stat-lbl {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    /* Actions row inside stats wrap */
+    .actions-panel {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .btn-export {
+      background: linear-gradient(90deg, var(--color-violet), var(--color-cyan));
+      color: #0A0C18;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      padding: 0.8rem 1.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .btn-export:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.4);
+    }
+
+    .btn-export:focus-visible {
+      outline: 2px solid var(--border-focus);
+      outline-offset: 2px;
+    }
+
+    /* -------------------------------------------------------------
+       SPRINT ACCORDION TIMELINE
+    ------------------------------------------------------------- */
+    .timeline-title {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      margin-bottom: 1.25rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .timeline-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+
+    .accordion-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .day-card {
+      border-radius: 12px;
+      overflow: hidden;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+    }
+
+    .day-card.today-highlight {
+      border-color: var(--color-cyan);
+      box-shadow: 0 0 15px rgba(34, 211, 238, 0.15);
+    }
+
+    .day-card.day-complete {
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    /* Header Trigger Accordion Button */
+    .day-header-btn {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: inherit;
+      text-align: left;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    @media (min-width: 640px) {
+      .day-header-btn {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+      }
+    }
+
+    .day-header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-shrink: 0;
+    }
+
+    .day-number {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .day-card.today-highlight .day-number {
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--color-cyan);
+      border-color: rgba(34, 211, 238, 0.3);
+    }
+
+    .day-date {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      font-weight: 500;
+    }
+
+    /* Today Tag Pulsing Badge */
+    .badge-today {
+      background: var(--color-cyan);
+      color: #0A0C18;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      animation: pulseGlow 2s infinite alternate ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 4px rgba(34, 211, 238, 0.4); opacity: 0.9; }
+      100% { box-shadow: 0 0 12px rgba(34, 211, 238, 0.8); opacity: 1; }
+    }
+
+    /* Card Mini Progress Strip Indicator */
+    .day-progress-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .mini-track {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .mini-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--color-violet), var(--color-cyan));
+      border-radius: 10px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
+    }
+
+    .day-card.day-complete .mini-fill {
+      background: var(--color-success);
+      box-shadow: 0 0 8px var(--color-success-glow);
+    }
+
+    .mini-txt {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      min-width: 45px;
+      text-align: right;
+    }
+
+    /* Chevron Indicator */
+    .chevron-icon {
+      width: 20px;
+      height: 20px;
+      stroke: var(--text-muted);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.3s ease, stroke 0.3s ease;
+      align-self: flex-end;
+    }
+
+    @media (min-width: 640px) {
+      .chevron-icon {
+        align-self: center;
+      }
+    }
+
+    .day-card.expanded .chevron-icon {
+      transform: rotate(180deg);
+      stroke: var(--text-primary);
+    }
+
+    /* Accordion Grid Animation Engine */
+    .accordion-content {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .day-card.expanded .accordion-content {
+      grid-template-rows: 1fr;
+    }
+
+    .accordion-inner {
+      overflow: hidden;
+    }
+
+    /* -------------------------------------------------------------
+       TASKS MOCK PANEL ROWS
+    ------------------------------------------------------------- */
+    .tasks-panel-container {
+      padding: 0 1.25rem 1.5rem 1.25rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .task-row {
+      background: var(--card-bg-nested);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    @media (min-width: 768px) {
+      .task-row {
+        grid-template-columns: 2fr 3fr 1.5fr auto;
+        gap: 1.25rem;
+      }
+    }
+
+    .task-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Form Fields Styling */
+    .input-wrapper {
+      width: 100%;
+    }
+
+    .field-input {
+      width: 100%;
+      background: rgba(10, 12, 24, 0.8);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: 6px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .field-input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.15);
+    }
+
+    .field-input::placeholder {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    /* Score Box Wrap */
+    .score-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .score-input {
+      width: 70px;
+      text-align: center;
+      font-family: var(--font-mono);
+    }
+
+    .score-max-lbl {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* Custom Animated Checkbox Engine */
+    .custom-checkbox-container {
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      position: relative;
+    }
+
+    .hidden-checkbox {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .checkbox-svg {
+      width: 26px;
+      height: 26px;
+      overflow: visible;
+    }
+
+    .checkbox-box {
+      fill: rgba(10, 12, 24, 0.8);
+      stroke: var(--border-color);
+      stroke-width: 2;
+      rx: 6px;
+      transition: stroke 0.25s ease, fill 0.25s ease, filter 0.25s ease;
+    }
+
+    .checkbox-tick {
+      fill: none;
+      stroke: #0A0C18;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 24;
+      stroke-dashoffset: 24;
+      transition: stroke-dashoffset 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Checked and Interaction States */
+    .hidden-checkbox:checked + .checkbox-svg .checkbox-box {
+      fill: var(--color-cyan);
+      stroke: var(--color-cyan);
+      filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.6));
+    }
+
+    .hidden-checkbox:checked + .checkbox-svg .checkbox-tick {
+      stroke-dashoffset: 0;
+    }
+
+    .hidden-checkbox:focus-visible + .checkbox-svg .checkbox-box {
+      stroke: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
+    }
+
+    /* -------------------------------------------------------------
+       ACCESSIBILITY UTILITIES
+    ------------------------------------------------------------- */
+    .day-header-btn:focus-visible {
+      outline: 2px solid var(--border-focus);
+      background: rgba(255, 255, 255, 0.02);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blob-container">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+
+  <div class="app-container">
+    
+    <header>
+      <div class="eyebrow">Sprint Framework Matrix</div>
+      <h1 class="gradient-text">Rajveer Singh's 50-Day Mock Tracker</h1>
+      <div class="date-span">13 July 2026 — 31 August 2026</div>
     </header>
 
-    <main class="max-w-4xl mx-auto px-4 mt-6">
-        <!-- Dashboard Cards Area -->
-        <div id="trackerContainer" class="space-y-6">
-            <!-- Dynamic days will generate automatically here -->
+    <section class="dashboard">
+      
+      <div class="glass-panel progress-ring-card">
+        <div class="ring-container">
+          <svg class="ring-svg">
+            <defs>
+              <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#8B5CF6" />
+                <stop offset="100%" stop-color="#22D3EE" />
+              </linearGradient>
+            </defs>
+            <circle class="ring-bg" cx="70" cy="70" r="65"></circle>
+            <circle class="ring-fill" id="overall-ring-fill" cx="70" cy="70" r="65"></circle>
+          </svg>
+          <div class="ring-text" id="overall-percentage-txt">0%</div>
         </div>
-    </main>
+        <div class="ring-label">Overall Completion</div>
+      </div>
 
-    <script>
-        // Target Setup Configuration
-        const START_DATE = new Date(2026, 6, 13); // 13 July 2026 (Month index is 0-based)
-        let totalDays = parseInt(localStorage.getItem('sprint_total_days')) || 30;
+      <div class="glass-panel stats-grid">
+        <div class="stat-tile">
+          <div class="stat-val" id="stats-days-complete">0</div>
+          <div class="stat-lbl">Days Fully<br>Completed</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-val" id="stats-tasks-ticked">0</div>
+          <div class="stat-lbl">Total Mocks<br>Evaluated</div>
+        </div>
+        <div class="stat-tile">
+          <div class="stat-val" id="stats-streak">0</div>
+          <div class="stat-lbl">Current Daily<br>Streak (Days)</div>
+        </div>
         
-        // Load existing data or create an empty object
-        let appData = JSON.parse(localStorage.getItem('sprint_tracker_data')) || {};
+        <div class="actions-panel">
+          <button class="btn-export" id="btn-export-pdf" aria-label="Export execution timeline data to PDF document format">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Download progress PDF
+          </button>
+        </div>
+      </div>
 
-        // Sync dropdown to stored preference
-        document.getElementById('sprintDaysSelect').value = totalDays;
+    </section>
 
-        function changeSprintLength(newLength) {
-            totalDays = parseInt(newLength);
-            localStorage.setItem('sprint_total_days', totalDays);
-            buildTrackerUI();
+    <section>
+      <h2 class="timeline-title">50-Day Execution Timeline Blueprint</h2>
+      <div class="accordion-list" id="sprint-accordion-target"></div>
+    </section>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // ENGINE SCRIPT CONFIGURATION
+    // -------------------------------------------------------------
+    const START_DATE = new Date(2026, 6, 13); // July 13, 2026
+    const TOTAL_DAYS = 50;
+    const MOCKS_PER_DAY = 6;
+    const LOCAL_STORAGE_KEY = "rajveer_sprint_tracker_v1";
+
+    let appStorage = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || {};
+
+    function saveToStorage() {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appStorage));
+      calculateMetrics();
+    }
+
+    function toggleDayCard(dayNum) {
+      const card = document.getElementById(`day-card-${dayNum}`);
+      if (card) {
+        card.classList.toggle('expanded');
+      }
+    }
+
+    function updateField(dayNum, fieldKey, val) {
+      if (!appStorage[dayNum]) appStorage[dayNum] = {};
+      appStorage[dayStorageKey(dayNum, fieldKey)] = val;
+      saveToStorage();
+      updateCardProgressBar(dayNum);
+    }
+
+    function appStorageKey(dayNum, fieldKey) {
+      return `D${dayNum}_${fieldKey}`;
+    }
+
+    function updateCardProgressBar(dayNum) {
+      let tickedCount = 0;
+      for (let t = 1; t <= MOCKS_PER_DAY; t++) {
+        if (appStorage[`D${dayNum}_T${t}_Done`] === true) tickedCount++;
+      }
+      
+      const pct = Math.round((tickedCount / MOCKS_PER_DAY) * 100);
+      const fillElement = document.getElementById(`mini-fill-${dayNum}`);
+      const txtElement = document.getElementById(`mini-txt-${dayNum}`);
+      const cardElement = document.getElementById(`day-card-${dayNum}`);
+      
+      if (fillElement) fillElement.style.width = `${pct}%`;
+      if (txtElement) txtElement.innerText = `${tickedCount}/${MOCKS_PER_DAY}`;
+      
+      if (cardElement) {
+        if (tickedCount === MOCKS_PER_DAY) {
+          cardElement.classList.add('day-complete');
+        } else {
+          cardElement.classList.remove('day-complete');
+        }
+      }
+    }
+
+    function calculateMetrics() {
+      let totalMocksEvaluated = 0;
+      let totalFullyCompletedDays = 0;
+      const totalPossibleTasks = TOTAL_DAYS * MOCKS_PER_DAY;
+
+      const today = new Date();
+      const todayString = today.toLocaleDateString('en-GB');
+
+      // Setup timeline trackers for calculation parameters
+      for (let d = 1; d <= TOTAL_DAYS; d++) {
+        let dayTicked = 0;
+        for (let t = 1; t <= MOCKS_PER_DAY; t++) {
+          if (appStorage[`D${d}_T${t}_Done`] === true) {
+            totalMocksEvaluated++;
+            dayTicked++;
+          }
+        }
+        if (dayTicked === MOCKS_PER_DAY) totalFullyCompletedDays++;
+      }
+
+      // Percentage Circle Calculations
+      const globalPct = totalPossibleTasks > 0 ? Math.round((totalMocksEvaluated / totalPossibleTasks) * 100) : 0;
+      document.getElementById('overall-percentage-txt').innerText = `${globalPct}%`;
+      
+      const circleRadius = 65;
+      const circumference = 2 * Math.PI * circleRadius;
+      const dashOffset = circumference - (globalPct / 100) * circumference;
+      document.getElementById('overall-ring-fill').style.strokeDashoffset = dashOffset;
+
+      // Dashboard Metric Value Updates
+      document.getElementById('stats-days-complete').innerText = totalFullyCompletedDays;
+      document.getElementById('stats-tasks-ticked').innerText = totalMocksEvaluated;
+
+      // Realtime Current Streak Calculation Engine
+      let currentStreak = 0;
+      let dayIndexForStreak = 1;
+
+      // Find which timeline day index corresponds to today's date
+      for (let i = 0; i < TOTAL_DAYS; i++) {
+        const cDate = new Date(START_DATE);
+        cDate.setDate(START_DATE.getDate() + i);
+        if (cDate.toLocaleDateString('en-GB') === todayString) {
+          dayIndexForStreak = i + 1;
+          break;
+        }
+      }
+
+      // Walk backward starting from today's timeline position to measure consistency
+      for (let d = dayIndexForStreak; d >= 1; d--) {
+        let dayCheckedCount = 0;
+        for (let t = 1; t <= MOCKS_PER_DAY; t++) {
+          if (appStorage[`D${d}_T${t}_Done`] === true) dayCheckedCount++;
+        }
+        // If the day has active evaluations logged, count it inside your daily streak
+        if (dayCheckedCount > 0) {
+          currentStreak++;
+        } else if (d === dayIndexForStreak) {
+          // If today has nothing evaluated yet, check yesterday to keep streak active
+          continue;
+        } else {
+          break;
+        }
+      }
+      document.getElementById('stats-streak').innerText = currentStreak;
+    }
+
+    function renderExecutionTimeline() {
+      const targetWrap = document.getElementById('sprint-accordion-target');
+      targetWrap.innerHTML = "";
+
+      const today = new Date();
+      const todayString = today.toLocaleDateString('en-GB');
+      let targetTodayElement = null;
+
+      for (let i = 0; i < TOTAL_DAYS; i++) {
+        const dayNum = i + 1;
+        
+        const currentCardDate = new Date(START_DATE);
+        currentCardDate.setDate(START_DATE.getDate() + i);
+        
+        const displayDate = currentCardDate.toLocaleDateString('en-GB', {
+          day: 'numeric', month: 'short', year: 'numeric'
+        });
+        const displayDayOfWeek = currentCardDate.toLocaleDateString('en-GB', { weekday: 'short' });
+        const finalDateLabel = `${displayDate} (${displayDayOfWeek})`;
+
+        const isToday = currentCardDate.toLocaleDateString('en-GB') === todayString;
+
+        // Generate Task Panel Content Data Rows
+        let rowsHtml = "";
+        for (let t = 1; t <= MOCKS_PER_DAY; t++) {
+          const valName = appStorage[`D${dayNum}_T${t}_Name`] || "";
+          const valScore = appStorage[`D${dayNum}_T${t}_Score`] || "";
+          const valDone = appStorage[`D${dayNum}_T${t}_Done`] === true;
+
+          rowsHtml += `
+            <div class="task-row">
+              <div class="task-label">Mock Examination ${t}</div>
+              <div class="input-wrapper">
+                <input type="text" value="${escapeHtml(valName)}" placeholder="Enter Target Subject / Test Name" 
+                       oninput="updateField(${dayNum}, 'T${t}_Name', this.value)"
+                       class="field-input">
+              </div>
+              <div class="score-container">
+                <input type="number" value="${valScore}" placeholder="--" 
+                       oninput="updateField(${dayNum}, 'T${t}_Score', this.value)"
+                       class="field-input score-input">
+                <span class="score-max-lbl">PTS</span>
+              </div>
+              <div>
+                <label class="custom-checkbox-container" aria-label="Mark test ${t} as complete">
+                  <input type="checkbox" class="hidden-checkbox" ${valDone ? 'checked' : ''} 
+                         onchange="updateField(${dayNum}, 'T${t}_Done', this.checked)">
+                  <svg class="checkbox-svg" viewBox="0 0 24 24">
+                    <rect class="checkbox-box" x="2" y="2" width="20" height="20"></rect>
+                    <path class="checkbox-tick" d="M6 12l4 4 8-8"></path>
+                  </svg>
+                </label>
+              </div>
+            </div>
+          `;
         }
 
-        function buildTrackerUI() {
-            const container = document.getElementById('trackerContainer');
-            container.innerHTML = "";
-            
-            // Get today's system date adjusted to ignore timestamp hours
-            const today = new Date();
-            const todayString = today.toLocaleDateString('en-GB'); // "DD/MM/YYYY"
+        const cardItem = document.createElement('div');
+        cardItem.id = `day-card-${dayNum}`;
+        cardItem.className = `day-card ${isToday ? 'today-highlight expanded' : ''}`;
+        
+        cardItem.innerHTML = `
+          <button class="day-header-btn" onclick="toggleDayCard(${dayNum})" aria-expanded="${isToday}" aria-controls="panel-content-${dayNum}">
+            <div class="day-header-left">
+              <span class="day-number">Day ${String(dayNum).padStart(2, '0')}</span>
+              <span class="day-date">${finalDateLabel}</span>
+              ${isToday ? '<span class="badge-today">TODAY</span>' : ''}
+            </div>
+            <div class="day-progress-wrapper" onclick="event.stopPropagation();">
+              <div class="mini-track">
+                <div class="mini-fill" id="mini-fill-${dayNum}"></div>
+              </div>
+              <div class="mini-txt" id="mini-txt-${dayNum}">0/${MOCKS_PER_DAY}</div>
+            </div>
+            <svg class="chevron-icon" viewBox="0 0 24 24">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          
+          <div class="accordion-content" id="panel-content-${dayNum}">
+            <div class="accordion-inner">
+              <div class="tasks-panel-container">
+                ${rowsHtml}
+              </div>
+            </div>
+          </div>
+        `;
 
-            let todayCardElement = null;
+        targetWrap.appendChild(cardItem);
+        updateCardProgressBar(dayNum);
+        if (isToday) targetTodayElement = cardItem;
+      }
 
-            for (let i = 0; i < totalDays; i++) {
-                const currentDayNum = i + 1;
-                
-                // Calculate calendar date for this specific card
-                const currentCardDate = new Date(START_DATE);
-                currentCardDate.setDate(START_DATE.getDate() + i);
-                
-                // Formats date nicely: "13 Jul 2026 (Mon)"
-                const displayDate = currentCardDate.toLocaleDateString('en-GB', {
-                    day: 'numeric', month: 'short', year: 'numeric'
-                });
-                const displayDayOfWeek = currentCardDate.toLocaleDateString('en-GB', { weekday: 'short' });
-                const finalDateLabel = `${displayDate} (${displayDayOfWeek})`;
+      // Auto scroll directly viewport targeted center focus onto Today's Card position
+      if (targetTodayElement) {
+        setTimeout(() => {
+          targetTodayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 350);
+      }
+    }
 
-                // Verify if this specific card matches today's exact calendar date
-                const isToday = currentCardDate.toLocaleDateString('en-GB') === todayString;
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
 
-                // Ensure data keys exist for this day
-                if (!appData[currentDayNum]) {
-                    appData[currentDayNum] = {};
-                }
+    // -------------------------------------------------------------
+    // ADVANCED DATA ANALYTICS PDF EXPORT ENGINE
+    // -------------------------------------------------------------
+    document.getElementById('btn-export-pdf').addEventListener('click', function () {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('p', 'pt', 'a4');
+      
+      // Target document brand accent layouts
+      doc.setFillColor(10, 12, 24);
+      doc.rect(0, 0, 595, 842, 'F');
+      
+      doc.setFont("Helvetica", "bold");
+      doc.setFontSize(22);
+      doc.setTextColor(34, 211, 238);
+      doc.text("RAJVEER SINGH - TRACKING PORTAL MATRIX", 40, 60);
+      
+      doc.setFont("Helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(156, 163, 175);
+      doc.text(`Generated Blueprint Schedule: 13 July 2026 — 31 August 2026  |  Exported: ${new Date().toLocaleDateString('en-GB')}`, 40, 80);
+      
+      // Calculate active metrics data for printing overview table summaries
+      let evaluatedCounter = 0;
+      let loggedTableRowsData = [];
+      
+      for (let d = 1; d <= TOTAL_DAYS; d++) {
+        let currentCardDate = new Date(START_DATE);
+        currentCardDate.setDate(START_DATE.getDate() + (d - 1));
+        const cleanDateLabel = currentCardDate.toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
 
-                const dayCard = document.createElement('div');
-                dayCard.className = `bg-gray-800 rounded-xl p-5 border border-gray-700 transition-all ${isToday ? 'today-card' : ''}`;
-                if (isToday) todayCardElement = dayCard;
-
-                let testRowsHtml = "";
-                for (let t = 1; t <= 6; t++) {
-                    const mockKeyName = `T${t}_Name`;
-                    const mockKeyScore = `T${t}_Score`;
-                    const mockKeyDone = `T${t}_Done`;
-
-                    const valName = appData[currentDayNum][mockKeyName] || "";
-                    const valScore = appData[currentDayNum][mockKeyScore] || "";
-                    const valDone = appData[currentDayNum][mockKeyDone] === true;
-
-                    testRowsHtml += `
-                        <div class="grid grid-cols-12 gap-2 items-center border-b border-gray-700/40 py-2 last:border-0">
-                            <span class="col-span-2 text-[10px] font-bold text-gray-500 tracking-wider">MOCK ${t}</span>
-                            
-                            <input type="text" value="${escapeHtml(valName)}" placeholder="Mock Name" 
-                                   oninput="saveLocalData(${currentDayNum}, '${mockKeyName}', this.value)"
-                                   class="col-span-5 bg-gray-900 text-xs text-white rounded px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-blue-500">
-                            
-                            <input type="number" value="${valScore}" placeholder="Score" 
-                                   oninput="saveLocalData(${currentDayNum}, '${mockKeyScore}', this.value)"
-                                   class="col-span-3 bg-gray-900 text-xs text-center text-white rounded px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-blue-500">
-                            
-                            <div class="col-span-2 flex justify-center">
-                                <input type="checkbox" ${valDone ? 'checked' : ''} 
-                                       onchange="saveLocalData(${currentDayNum}, '${mockKeyDone}', this.checked)"
-                                       class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-gray-700 focus:ring-blue-500 cursor-pointer">
-                            </div>
-                        </div>
-                    `;
-                }
-
-                dayCard.innerHTML = `
-                    <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
-                        <div>
-                            <h3 class="text-base font-bold text-white">Day ${currentDayNum}</h3>
-                            <p class="text-xs text-gray-400">${finalDateLabel}</p>
-                        </div>
-                        ${isToday ? '<span class="bg-blue-600 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-full animate-pulse">Today</span>' : ''}
-                    </div>
-                    <div class="space-y-1">
-                        ${testRowsHtml}
-                    </div>
-                `;
-                container.appendChild(dayCard);
-            }
-
-            // Auto-scroll screen down straight to today's card instantly so you don't scroll manually
-            if (todayCardElement) {
-                setTimeout(() => {
-                    todayCardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }, 200);
-            }
+        for (let t = 1; t <= MOCKS_PER_DAY; t++) {
+          const testName = appStorage[`D${d}_T${t}_Name`] || "";
+          const testScore = appStorage[`D${d}_T${t}_Score`] || "";
+          const isDone = appStorage[`D${d}_T${t}_Done`] === true;
+          
+          if (testName || testScore || isDone) {
+            if (isDone) evaluatedCounter++;
+            loggedTableRowsData.push([
+              `Day ${d} (${cleanDateLabel})`,
+              `Mock Exam ${t}`,
+              testName || "Unnamed Study Session Slot",
+              testScore ? `${testScore} PTS` : "Not Scored",
+              isDone ? "COMPLETED" : "INCOMPLETE"
+            ]);
+          }
         }
+      }
 
-        function saveLocalData(dayNum, field, value) {
-            if (!appData[dayNum]) appData[dayNum] = {};
-            appData[dayNum][field] = value;
-            
-            // Push changes instantly to device LocalStorage memory
-            localStorage.setItem('sprint_tracker_data', JSON.stringify(appData));
-        }
+      if (loggedTableRowsData.length === 0) {
+        doc.setFontSize(14);
+        doc.setTextColor(244, 114, 182);
+        doc.text("No log data entries filled across your timeline yet.", 40, 140);
+        doc.save("Rajveer_Sprint_Blank_Blueprint.pdf");
+        return;
+      }
 
-        function escapeHtml(text) {
-            if (!text) return '';
-            return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        }
+      doc.autoTable({
+        startY: 110,
+        head: [['Timeline Phase', 'Task Slot', 'Evaluation Subject / Topic Name', 'Logged Score', 'Status']],
+        body: loggedTableRowsData,
+        theme: 'grid',
+        headStyles: { fillOpacity: 0.9, fillColor: [139, 92, 246], textColor: [255, 255, 255], fontStyle: 'bold' },
+        bodyStyles: { fillColor: [20, 24, 46], textColor: [243, 244, 246] },
+        alternateRowStyles: { fillColor: [30, 37, 68] },
+        styles: { borderColor: [255, 255, 255, 0.08], fontSize: 9 },
+        margin: { left: 40, right: 40 }
+      });
 
-        // Initialize UI engine
-        buildTrackerUI();
-    </script>
+      doc.save("Rajveer_Sprint_Performance_Report.pdf");
+    });
+
+    // Launch Application Core Engine Runtime
+    renderExecutionTimeline();
+    calculateMetrics();
+  </script>
 </body>
 </html>
