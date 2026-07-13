@@ -3,159 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Integrated Sprint Tracker</title>
+    <title>Sprint Tracker (Local Storage)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .today-card { border: 2px solid #22d3ee; box-shadow: 0 0 20px rgba(34, 211, 238, 0.25); }
+        .today-card { 
+            border: 2px solid #3b82f6; 
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); 
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans min-h-screen pb-12">
 
-    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 px-4 py-3 shadow-md">
-        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+    <!-- Top Navigation Dashboard -->
+    <header class="bg-gray-800 border-b border-gray-700 sticky top-0 z-50 px-4 py-4 shadow-md">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-xl font-bold text-white tracking-wide">⚡ RAJVEER'S SPRINT TRACKER</h1>
-                <p class="text-xs text-gray-400">Synced with Google Sheets</p>
+                <h1 class="text-xl font-bold text-white tracking-wide">⚡ LOCAL SPRINT TRACKER</h1>
+                <p class="text-xs text-green-400 font-mono">● Active Mode: Local Browser Autosave</p>
             </div>
             
-            <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
-                <span id="syncStatus" class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full flex items-center gap-1">
-                    ⚪ Unconfigured
-                </span>
+            <!-- Sprint Length Controller -->
+            <div class="flex items-center gap-2 bg-gray-950 p-1.5 rounded-lg border border-gray-700">
+                <span class="text-xs text-gray-400 px-2">Sprint Days:</span>
+                <select id="sprintDaysSelect" onchange="changeSprintLength(this.value)" class="bg-gray-900 text-xs text-white rounded px-2 py-1 border border-gray-700 focus:outline-none focus:border-blue-500">
+                    <option value="10">10 Days</option>
+                    <option value="30" selected>30 Days</option>
+                    <option value="45">45 Days</option>
+                    <option value="60">60 Days</option>
+                </select>
             </div>
-        </div>
-        
-        <div class="max-w-4xl mx-auto mt-3 border-t border-gray-700 pt-3 flex gap-2">
-            <input type="text" id="scriptUrlInput" placeholder="Paste your Google Apps Script Web App URL here..." 
-                   class="bg-gray-900 text-xs text-gray-300 rounded px-3 py-2 flex-grow border border-gray-700 focus:outline-none focus:border-blue-500">
-            <button onclick="saveConfiguration()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded transition">
-                Connect Sheet
-            </button>
         </div>
     </header>
 
     <main class="max-w-4xl mx-auto px-4 mt-6">
-        <div id="loading" class="hidden text-center py-12">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
-            <p class="text-gray-400">Fetching latest data from your cloud sheet...</p>
+        <!-- Dashboard Cards Area -->
+        <div id="trackerContainer" class="space-y-6">
+            <!-- Dynamic days will generate automatically here -->
         </div>
-
-        <div id="emptyNotice" class="hidden bg-gray-800 border border-yellow-600/50 rounded-xl p-6 text-center text-gray-300 my-6 max-w-xl mx-auto">
-            <p class="font-semibold text-yellow-400 mb-2">Spreadsheet Rows Not Found!</p>
-            <p class="text-xs leading-relaxed">
-                Your code connected to the sheet, but couldn't find any tracker data. Make sure you have filled row entries below your column headers in Google Sheets! (e.g., set Row 2 to Day <code class="bg-gray-900 px-1 text-cyan-400">1</code>, Date <code class="bg-gray-900 px-1 text-cyan-400">13 July 2026</code>).
-            </p>
-        </div>
-
-        <div id="trackerContainer" class="space-y-6"></div>
     </main>
 
     <script>
-        let SCRIPT_URL = localStorage.getItem('sheet_script_url') || "";
-        let trackerData = [];
+        // Target Setup Configuration
+        const START_DATE = new Date(2026, 6, 13); // 13 July 2026 (Month index is 0-based)
+        let totalDays = parseInt(localStorage.getItem('sprint_total_days')) || 30;
+        
+        // Load existing data or create an empty object
+        let appData = JSON.parse(localStorage.getItem('sprint_tracker_data')) || {};
 
-        document.getElementById('scriptUrlInput').value = SCRIPT_URL;
+        // Sync dropdown to stored preference
+        document.getElementById('sprintDaysSelect').value = totalDays;
 
-        function saveConfiguration() {
-            const url = document.getElementById('scriptUrlInput').value.trim();
-            if(url) {
-                localStorage.setItem('sheet_script_url', url);
-                SCRIPT_URL = url;
-                initTracker();
-            }
+        function changeSprintLength(newLength) {
+            totalDays = parseInt(newLength);
+            localStorage.setItem('sprint_total_days', totalDays);
+            buildTrackerUI();
         }
 
-        async function initTracker() {
-            if (!SCRIPT_URL) {
-                updateStatus("⚪ Paste URL to Connect", "bg-yellow-900 text-yellow-300");
-                return;
-            }
-            
-            document.getElementById('loading').classList.remove('hidden');
-            document.getElementById('emptyNotice').classList.add('hidden');
-            document.getElementById('trackerContainer').innerHTML = "";
-            updateStatus("🔄 Syncing Cloud...", "bg-blue-900 text-blue-200 animate-pulse");
-
-            try {
-                const response = await fetch(SCRIPT_URL);
-                trackerData = await response.json();
-                
-                if(!trackerData || trackerData.length === 0) {
-                    document.getElementById('emptyNotice').classList.remove('hidden');
-                    updateStatus("⚠️ Sheet Rows Empty", "bg-yellow-900 text-yellow-200");
-                    return;
-                }
-
-                renderDashboard();
-                updateStatus("☁️ Cloud Synced", "bg-green-900 text-green-200");
-            } catch (error) {
-                console.error(error);
-                updateStatus("❌ Connection Error", "bg-red-900 text-red-200");
-            } finally {
-                document.getElementById('loading').classList.add('hidden');
-            }
-        }
-
-        function updateStatus(text, classes) {
-            const statusBadge = document.getElementById('syncStatus');
-            statusBadge.className = `text-xs px-3 py-1 rounded-full flex items-center gap-1 ${classes}`;
-            statusBadge.innerHTML = text;
-        }
-
-        // Robust context-aware check for July 13, 2026
-        function verifyIfRowIsToday(dateValue) {
-            if (!dateValue) return false;
-            
-            const targetDate = new Date(dateValue);
-            const today = new Date(); // Resolves natively to July 13, 2026 context
-            
-            if (!isNaN(targetDate.getTime())) {
-                return targetDate.getDate() === today.getDate() &&
-                       targetDate.getMonth() === today.getMonth() &&
-                       targetDate.getFullYear() === today.getFullYear();
-            }
-            
-            // Fallback for custom text strings typed by user
-            const rawString = dateValue.toString().toLowerCase();
-            return rawString.includes("13") && (rawString.includes("jul") || rawString.includes("july"));
-        }
-
-        function renderDashboard() {
+        function buildTrackerUI() {
             const container = document.getElementById('trackerContainer');
             container.innerHTML = "";
             
-            trackerData.forEach(dayRow => {
-                const isToday = verifyIfRowIsToday(dayRow.Date);
-                const dayCard = document.createElement('div');
-                dayCard.className = `bg-gray-800 rounded-xl p-5 border border-gray-700 transition ${isToday ? 'today-card' : ''}`;
+            // Get today's system date adjusted to ignore timestamp hours
+            const today = new Date();
+            const todayString = today.toLocaleDateString('en-GB'); // "DD/MM/YYYY"
+
+            let todayCardElement = null;
+
+            for (let i = 0; i < totalDays; i++) {
+                const currentDayNum = i + 1;
                 
-                // Clean displaying format for the card UI date
-                let displayDate = dayRow.Date || 'No Date Added';
-                if (dayRow.Date && !isNaN(new Date(dayRow.Date).getTime())) {
-                    displayDate = new Date(dayRow.Date).toLocaleDateString('en-GB', {
-                        day: 'numeric', month: 'short', year: 'numeric'
-                    });
+                // Calculate calendar date for this specific card
+                const currentCardDate = new Date(START_DATE);
+                currentCardDate.setDate(START_DATE.getDate() + i);
+                
+                // Formats date nicely: "13 Jul 2026 (Mon)"
+                const displayDate = currentCardDate.toLocaleDateString('en-GB', {
+                    day: 'numeric', month: 'short', year: 'numeric'
+                });
+                const displayDayOfWeek = currentCardDate.toLocaleDateString('en-GB', { weekday: 'short' });
+                const finalDateLabel = `${displayDate} (${displayDayOfWeek})`;
+
+                // Verify if this specific card matches today's exact calendar date
+                const isToday = currentCardDate.toLocaleDateString('en-GB') === todayString;
+
+                // Ensure data keys exist for this day
+                if (!appData[currentDayNum]) {
+                    appData[currentDayNum] = {};
                 }
 
+                const dayCard = document.createElement('div');
+                dayCard.className = `bg-gray-800 rounded-xl p-5 border border-gray-700 transition-all ${isToday ? 'today-card' : ''}`;
+                if (isToday) todayCardElement = dayCard;
+
                 let testRowsHtml = "";
-                for(let t=1; t<=6; t++) {
-                    const tName = dayRow[`T${t}_Name`] || "";
-                    const tScore = dayRow[`T${t}_Score`] !== undefined ? dayRow[`T${t}_Score`] : "";
-                    const tDone = dayRow[`T${t}_Done`] === true || dayRow[`T${t}_Done`] === "TRUE";
+                for (let t = 1; t <= 6; t++) {
+                    const mockKeyName = `T${t}_Name`;
+                    const mockKeyScore = `T${t}_Score`;
+                    const mockKeyDone = `T${t}_Done`;
+
+                    const valName = appData[currentDayNum][mockKeyName] || "";
+                    const valScore = appData[currentDayNum][mockKeyScore] || "";
+                    const valDone = appData[currentDayNum][mockKeyDone] === true;
 
                     testRowsHtml += `
-                        <div class="grid grid-cols-12 gap-2 items-center border-b border-gray-700/50 py-2 last:border-0">
-                            <span class="col-span-2 text-xs font-bold text-gray-500">MOCK ${t}</span>
-                            <input type="text" value="${escapeHtml(tName)}" placeholder="Test Name" 
-                                   onchange="updateCloudData(${dayRow.Day}, 'T${t}_Name', this.value)"
-                                   class="col-span-5 bg-gray-900 text-xs text-white rounded px-2 py-1 border border-gray-700 focus:outline-none focus:border-cyan-500">
-                            <input type="number" value="${tScore}" placeholder="Score" 
-                                   onchange="updateCloudData(${dayRow.Day}, 'T${t}_Score', this.value)"
-                                   class="col-span-3 bg-gray-900 text-xs text-center text-white rounded px-2 py-1 border border-gray-700 focus:outline-none focus:border-cyan-500">
+                        <div class="grid grid-cols-12 gap-2 items-center border-b border-gray-700/40 py-2 last:border-0">
+                            <span class="col-span-2 text-[10px] font-bold text-gray-500 tracking-wider">MOCK ${t}</span>
+                            
+                            <input type="text" value="${escapeHtml(valName)}" placeholder="Mock Name" 
+                                   oninput="saveLocalData(${currentDayNum}, '${mockKeyName}', this.value)"
+                                   class="col-span-5 bg-gray-900 text-xs text-white rounded px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-blue-500">
+                            
+                            <input type="number" value="${valScore}" placeholder="Score" 
+                                   oninput="saveLocalData(${currentDayNum}, '${mockKeyScore}', this.value)"
+                                   class="col-span-3 bg-gray-900 text-xs text-center text-white rounded px-2 py-1.5 border border-gray-700 focus:outline-none focus:border-blue-500">
+                            
                             <div class="col-span-2 flex justify-center">
-                                <input type="checkbox" ${tDone ? 'checked' : ''} 
-                                       onchange="updateCloudData(${dayRow.Day}, 'T${t}_Done', this.checked)"
-                                       class="w-4 h-4 rounded text-cyan-500 bg-gray-900 border-gray-700 focus:ring-cyan-500">
+                                <input type="checkbox" ${valDone ? 'checked' : ''} 
+                                       onchange="saveLocalData(${currentDayNum}, '${mockKeyDone}', this.checked)"
+                                       class="w-4 h-4 rounded text-blue-600 bg-gray-900 border-gray-700 focus:ring-blue-500 cursor-pointer">
                             </div>
                         </div>
                     `;
@@ -164,40 +129,32 @@
                 dayCard.innerHTML = `
                     <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
                         <div>
-                            <h3 class="text-base font-bold text-white">Day ${dayRow.Day}</h3>
-                            <p class="text-xs text-gray-400">${displayDate}</p>
+                            <h3 class="text-base font-bold text-white">Day ${currentDayNum}</h3>
+                            <p class="text-xs text-gray-400">${finalDateLabel}</p>
                         </div>
-                        ${isToday ? '<span class="bg-cyan-500 text-gray-900 text-[10px] uppercase font-bold tracking-widest px-2 py-0.5 rounded-full animate-pulse">Today</span>' : ''}
+                        ${isToday ? '<span class="bg-blue-600 text-white text-[10px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-full animate-pulse">Today</span>' : ''}
                     </div>
                     <div class="space-y-1">
                         ${testRowsHtml}
                     </div>
                 `;
                 container.appendChild(dayCard);
-            });
+            }
+
+            // Auto-scroll screen down straight to today's card instantly so you don't scroll manually
+            if (todayCardElement) {
+                setTimeout(() => {
+                    todayCardElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 200);
+            }
         }
 
-        async function updateCloudData(dayNum, field, value) {
-            updateStatus("⏳ Saving changes...", "bg-yellow-900 text-yellow-200");
+        function saveLocalData(dayNum, field, value) {
+            if (!appData[dayNum]) appData[dayNum] = {};
+            appData[dayNum][field] = value;
             
-            const targets = trackerData.find(d => d.Day == dayNum);
-            if(targets) targets[field] = value;
-
-            const payload = { Day: dayNum };
-            payload[field] = value;
-
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                updateStatus("☁️ Saved to Cloud", "bg-green-900 text-green-200");
-            } catch (e) {
-                console.error(e);
-                updateStatus("❌ Save Failed", "bg-red-900 text-red-200");
-            }
+            // Push changes instantly to device LocalStorage memory
+            localStorage.setItem('sprint_tracker_data', JSON.stringify(appData));
         }
 
         function escapeHtml(text) {
@@ -205,7 +162,8 @@
             return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
         }
 
-        initTracker();
+        // Initialize UI engine
+        buildTrackerUI();
     </script>
 </body>
 </html>
