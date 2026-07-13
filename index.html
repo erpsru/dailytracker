@@ -1,1056 +1,866 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Rajveer Singh - 50-Day Mock Test Sprint Tracker</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-
-  <style>
-    /* -------------------------------------------------------------
-       CUSTOM PROPERTIES & RESET
-    ------------------------------------------------------------- */
-    :root {
-      --bg-main: #0A0C18;
-      --card-bg: rgba(20, 24, 46, 0.65);
-      --card-bg-nested: rgba(30, 37, 68, 0.5);
-      --border-color: rgba(255, 255, 255, 0.08);
-      --border-focus: #22D3EE;
-      
-      --text-primary: #F3F4F6;
-      --text-secondary: #9CA3AF;
-      --text-muted: #6B7280;
-      
-      --color-violet: #8B5CF6;
-      --color-cyan: #22D3EE;
-      --color-pink: #F472B6;
-      --color-success: #10B981;
-      --color-success-glow: rgba(16, 185, 129, 0.25);
-
-      --font-display: 'Space Grotesk', sans-serif;
-      --font-body: 'Inter', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background-color: var(--bg-main);
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      min-height: 100vh;
-      overflow-x: hidden;
-      position: relative;
-      padding-bottom: 4rem;
-    }
-
-    /* -------------------------------------------------------------
-       BACKGROUND ANIMATED BLOBS
-    ------------------------------------------------------------- */
-    .blob-container {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      z-index: -2;
-      overflow: hidden;
-      pointer-events: none;
-    }
-
-    .blob {
-      position: absolute;
-      width: 500px;
-      height: 500px;
-      border-radius: 50%;
-      filter: blur(120px);
-      opacity: 0.25;
-      mix-blend-mode: screen;
-    }
-
-    .blob-1 {
-      background: var(--color-violet);
-      top: -10%;
-      left: -10%;
-      animation: float-blob-1 25s infinite alternate ease-in-out;
-    }
-
-    .blob-2 {
-      background: var(--color-cyan);
-      bottom: -10%;
-      right: -10%;
-      animation: float-blob-2 30s infinite alternate ease-in-out;
-    }
-
-    .blob-3 {
-      background: var(--color-pink);
-      top: 40%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation: float-blob-3 28s infinite alternate ease-in-out;
-    }
-
-    @keyframes float-blob-1 {
-      0% { transform: translate(0px, 0px) scale(1); }
-      50% { transform: translate(80px, 60px) scale(1.1); }
-      100% { transform: translate(-40px, 120px) scale(0.9); }
-    }
-
-    @keyframes float-blob-2 {
-      0% { transform: translate(0px, 0px) scale(1); }
-      50% { transform: translate(-100px, -80px) scale(0.9); }
-      100% { transform: translate(50px, -40px) scale(1.15); }
-    }
-
-    @keyframes float-blob-3 {
-      0% { transform: translate(-50%, -50%) scale(1); }
-      50% { transform: translate(-40%, -60%) scale(1.05); }
-      100% { transform: translate(-60%, -40%) scale(0.95); }
-    }
-
-    /* Respect Reduced Motion */
-    @media (prefers-reduced-motion: reduce) {
-      .blob, .gradient-text, .day-card, .stat-tile, .btn-export {
-        animation: none !important;
-        transition: none !important;
-        transform: none !important;
-      }
-    }
-
-    /* -------------------------------------------------------------
-       CONTAINER & HEADER
-    ------------------------------------------------------------- */
-    .app-container {
-      width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 3rem;
-    }
-
-    .eyebrow {
-      font-family: var(--font-mono);
-      color: var(--color-cyan);
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      font-size: 0.85rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .gradient-text {
-      font-family: var(--font-display);
-      font-size: 2.75rem;
-      font-weight: 700;
-      background: linear-gradient(to right, #8B5CF6, #22D3EE, #F472B6, #8B5CF6);
-      background-size: 200% auto;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: textShimmer 6s linear infinite;
-      letter-spacing: -0.02em;
-      margin-bottom: 0.5rem;
-    }
-
-    @keyframes textShimmer {
-      to { background-position: 200% center; }
-    }
-
-    .date-span {
-      font-family: var(--font-mono);
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-    }
-
-    /* -------------------------------------------------------------
-       DASHBOARD PLATFORM (TOP TILES)
-    ------------------------------------------------------------- */
-    .dashboard {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-      margin-bottom: 3rem;
-    }
-
-    @media (min-width: 768px) {
-      .dashboard {
-        grid-template-columns: 1.2fr 2fr;
-      }
-    }
-
-    /* Glass Panels Basis */
-    .glass-panel {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-
-    /* Circular Progress Graphic Widget */
-    .progress-ring-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 2rem 1.5rem;
-    }
-
-    .ring-container {
-      position: relative;
-      width: 140px;
-      height: 140px;
-      margin-bottom: 1rem;
-    }
-
-    .ring-svg {
-      transform: rotate(-90deg);
-      width: 140px;
-      height: 140px;
-    }
-
-    .ring-bg {
-      fill: none;
-      stroke: rgba(255, 255, 255, 0.05);
-      stroke-width: 10;
-    }
-
-    .ring-fill {
-      fill: none;
-      stroke: url(#ring-gradient);
-      stroke-width: 10;
-      stroke-linecap: round;
-      stroke-dasharray: 408.4; /* 2 * pi * r (r=65) */
-      stroke-dashoffset: 408.4;
-      transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .ring-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-family: var(--font-mono);
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .ring-label {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-
-    /* Analytics Tiles Grid */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-
-    @media (min-width: 480px) {
-      .stats-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    .stat-tile {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.25rem;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-    }
-
-    .stat-tile:hover {
-      transform: translateY(-4px);
-      border-color: rgba(34, 211, 238, 0.3);
-    }
-
-    .stat-val {
-      font-family: var(--font-mono);
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 0.25rem;
-    }
-
-    .stat-tile:nth-child(1) .stat-val { color: var(--color-violet); }
-    .stat-tile:nth-child(2) .stat-val { color: var(--color-cyan); }
-    .stat-tile:nth-child(3) .stat-val { color: var(--color-pink); }
-
-    .stat-lbl {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      font-weight: 500;
-      line-height: 1.3;
-    }
-
-    /* Actions row inside stats wrap */
-    .actions-panel {
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: flex-end;
-      align-items: center;
-      margin-top: 0.5rem;
-    }
-
-    .btn-export {
-      background: linear-gradient(90deg, var(--color-violet), var(--color-cyan));
-      color: #0A0C18;
-      font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 0.95rem;
-      border: none;
-      padding: 0.8rem 1.6rem;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .btn-export:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(34, 211, 238, 0.4);
-    }
-
-    .btn-export:focus-visible {
-      outline: 2px solid var(--border-focus);
-      outline-offset: 2px;
-    }
-
-    /* -------------------------------------------------------------
-       SPRINT ACCORDION TIMELINE
-    ------------------------------------------------------------- */
-    .timeline-title {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      margin-bottom: 1.25rem;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .timeline-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border-color);
-    }
-
-    .accordion-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .day-card {
-      border-radius: 12px;
-      overflow: hidden;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-    }
-
-    .day-card.today-highlight {
-      border-color: var(--color-cyan);
-      box-shadow: 0 0 15px rgba(34, 211, 238, 0.15);
-    }
-
-    .day-card.day-complete {
-      border-color: rgba(16, 185, 129, 0.4);
-    }
-
-    /* Header Trigger Accordion Button */
-    .day-header-btn {
-      width: 100%;
-      background: transparent;
-      border: none;
-      color: inherit;
-      text-align: left;
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    @media (min-width: 640px) {
-      .day-header-btn {
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        gap: 1.5rem;
-      }
-    }
-
-    .day-header-left {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-shrink: 0;
-    }
-
-    .day-number {
-      font-family: var(--font-mono);
-      font-size: 0.9rem;
-      background: rgba(255, 255, 255, 0.06);
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      color: var(--text-secondary);
-      border: 1px solid var(--border-color);
-    }
-
-    .day-card.today-highlight .day-number {
-      background: rgba(34, 211, 238, 0.1);
-      color: var(--color-cyan);
-      border-color: rgba(34, 211, 238, 0.3);
-    }
-
-    .day-date {
-      font-family: var(--font-display);
-      font-size: 1.15rem;
-      font-weight: 500;
-    }
-
-    /* Today Tag Pulsing Badge */
-    .badge-today {
-      background: var(--color-cyan);
-      color: #0A0C18;
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      letter-spacing: 0.05em;
-      animation: pulseGlow 2s infinite alternate ease-in-out;
-    }
-
-    @keyframes pulseGlow {
-      0% { box-shadow: 0 0 4px rgba(34, 211, 238, 0.4); opacity: 0.9; }
-      100% { box-shadow: 0 0 12px rgba(34, 211, 238, 0.8); opacity: 1; }
-    }
-
-    /* Card Mini Progress Strip Indicator */
-    .day-progress-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      width: 100%;
-      max-width: 320px;
-    }
-
-    .mini-track {
-      flex: 1;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    .mini-fill {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--color-violet), var(--color-cyan));
-      border-radius: 10px;
-      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s ease;
-    }
-
-    .day-card.day-complete .mini-fill {
-      background: var(--color-success);
-      box-shadow: 0 0 8px var(--color-success-glow);
-    }
-
-    .mini-txt {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      min-width: 45px;
-      text-align: right;
-    }
-
-    /* Chevron Indicator */
-    .chevron-icon {
-      width: 20px;
-      height: 20px;
-      stroke: var(--text-muted);
-      stroke-width: 2;
-      fill: none;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      transition: transform 0.3s ease, stroke 0.3s ease;
-      align-self: flex-end;
-    }
-
-    @media (min-width: 640px) {
-      .chevron-icon {
-        align-self: center;
-      }
-    }
-
-    .day-card.expanded .chevron-icon {
-      transform: rotate(180deg);
-      stroke: var(--text-primary);
-    }
-
-    /* Accordion Grid Animation Engine */
-    .accordion-content {
-      display: grid;
-      grid-template-rows: 0fr;
-      transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .day-card.expanded .accordion-content {
-      grid-template-rows: 1fr;
-    }
-
-    .accordion-inner {
-      overflow: hidden;
-    }
-
-    /* -------------------------------------------------------------
-       TASKS MOCK PANEL ROWS
-    ------------------------------------------------------------- */
-    .tasks-panel-container {
-      padding: 0 1.25rem 1.5rem 1.25rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.03);
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      margin-top: 0.25rem;
-    }
-
-    .task-row {
-      background: var(--card-bg-nested);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 0.85rem 1rem;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.75rem;
-      align-items: center;
-    }
-
-    @media (min-width: 768px) {
-      .task-row {
-        grid-template-columns: 2fr 3fr 1.5fr auto;
-        gap: 1.25rem;
-      }
-    }
-
-    .task-label {
-      font-size: 0.95rem;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    /* Form Fields Styling */
-    .input-wrapper {
-      width: 100%;
-    }
-
-    .field-input {
-      width: 100%;
-      background: rgba(10, 12, 24, 0.8);
-      border: 1px solid var(--border-color);
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      font-size: 0.9rem;
-      padding: 0.55rem 0.75rem;
-      border-radius: 6px;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .field-input:focus {
-      outline: none;
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.15);
-    }
-
-    .field-input::placeholder {
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-
-    /* Score Box Wrap */
-    .score-container {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .score-input {
-      width: 70px;
-      text-align: center;
-      font-family: var(--font-mono);
-    }
-
-    .score-max-lbl {
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-
-    /* Custom Animated Checkbox Engine */
-    .custom-checkbox-container {
-      display: inline-flex;
-      align-items: center;
-      cursor: pointer;
-      user-select: none;
-      position: relative;
-    }
-
-    .hidden-checkbox {
-      position: absolute;
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-
-    .checkbox-svg {
-      width: 26px;
-      height: 26px;
-      overflow: visible;
-    }
-
-    .checkbox-box {
-      fill: rgba(10, 12, 24, 0.8);
-      stroke: var(--border-color);
-      stroke-width: 2;
-      rx: 6px;
-      transition: stroke 0.25s ease, fill 0.25s ease, filter 0.25s ease;
-    }
-
-    .checkbox-tick {
-      fill: none;
-      stroke: #0A0C18;
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-dasharray: 24;
-      stroke-dashoffset: 24;
-      transition: stroke-dashoffset 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Checked and Interaction States */
-    .hidden-checkbox:checked + .checkbox-svg .checkbox-box {
-      fill: var(--color-cyan);
-      stroke: var(--color-cyan);
-      filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.6));
-    }
-
-    .hidden-checkbox:checked + .checkbox-svg .checkbox-tick {
-      stroke-dashoffset: 0;
-    }
-
-    .hidden-checkbox:focus-visible + .checkbox-svg .checkbox-box {
-      stroke: var(--border-focus);
-      box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.2);
-    }
-
-    /* -------------------------------------------------------------
-       ACCESSIBILITY UTILITIES
-    ------------------------------------------------------------- */
-    .day-header-btn:focus-visible {
-      outline: 2px solid var(--border-focus);
-      background: rgba(255, 255, 255, 0.02);
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rajveer Singh — 50 Day Mock Sprint</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<style>
+  :root{
+    --bg-deep:#0A0C18;
+    --bg-mid:#11142A;
+    --glass:rgba(255,255,255,0.055);
+    --glass-strong:rgba(255,255,255,0.09);
+    --glass-border:rgba(255,255,255,0.12);
+    --text:#EDEFFB;
+    --text-dim:#9AA0C7;
+    --text-faint:#6C7299;
+    --violet:#8B5CF6;
+    --cyan:#22D3EE;
+    --pink:#F472B6;
+    --good:#34D399;
+    --good-glow:rgba(52,211,153,0.35);
+    --grad:linear-gradient(135deg,#8B5CF6 0%,#6366F1 45%,#22D3EE 100%);
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+
+  body{
+    min-height:100vh;
+    font-family:var(--font-body);
+    color:var(--text);
+    background:var(--bg-deep);
+    overflow-x:hidden;
+    position:relative;
+    padding-bottom:100px;
+  }
+
+  .bg-scene{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(139,92,246,0.22), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(34,211,238,0.18), transparent 45%),
+      radial-gradient(circle at 50% 90%, rgba(244,114,182,0.14), transparent 50%),
+      linear-gradient(180deg, var(--bg-deep), var(--bg-mid) 60%, var(--bg-deep));
+  }
+  .blob{
+    position:fixed;
+    border-radius:50%;
+    filter:blur(90px);
+    opacity:0.35;
+    z-index:-1;
+    animation:drift 26s ease-in-out infinite;
+  }
+  .blob1{width:420px;height:420px;background:#8B5CF6;top:-100px;left:-120px;animation-delay:0s;}
+  .blob2{width:380px;height:380px;background:#22D3EE;bottom:-140px;right:-100px;animation-delay:-8s;}
+  .blob3{width:300px;height:300px;background:#F472B6;top:40%;left:60%;animation-delay:-16s;}
+  @keyframes drift{
+    0%,100%{transform:translate(0,0) scale(1);}
+    33%{transform:translate(40px,-30px) scale(1.08);}
+    66%{transform:translate(-30px,20px) scale(0.95);}
+  }
+  .grain{
+    position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:0.03;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(18px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .fade-in{animation:fadeUp .7s cubic-bezier(.2,.8,.2,1) both;}
+
+  .glass{
+    background:rgba(20,22,42,0.72);
+    border:1px solid var(--glass-border);
+    border-radius:20px;
+    box-shadow:0 4px 30px rgba(0,0,0,0.25);
+  }
+
+  header.hero{
+    max-width:980px;
+    margin:0 auto;
+    padding:56px 24px 20px;
+    text-align:center;
+  }
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:0.3em;
+    text-transform:uppercase;
+    color:var(--cyan);
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before,.eyebrow::after{
+    content:'';
+    width:24px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--cyan));
+  }
+  .eyebrow::after{background:linear-gradient(90deg,var(--cyan),transparent);}
+
+  h1.name{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(40px,8vw,68px);
+    line-height:1.05;
+    background:var(--grad);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    background-size:200% 200%;
+    animation:shimmer 8s ease infinite;
+    letter-spacing:-0.02em;
+  }
+  @keyframes shimmer{
+    0%,100%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+  }
+  .hero-sub{
+    margin-top:14px;
+    color:var(--text-dim);
+    font-size:15px;
+    max-width:520px;
+    margin-left:auto;margin-right:auto;
+  }
+  .hero-dates{
+    margin-top:22px;
+    display:inline-flex;
+    gap:0;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--text-dim);
+    border:1px solid var(--glass-border);
+    border-radius:100px;
+    overflow:hidden;
+  }
+  .hero-dates span{padding:8px 18px;}
+  .hero-dates span:first-child{border-right:1px solid var(--glass-border);}
+  .hero-dates b{color:var(--text);}
+
+  .dashboard{
+    max-width:980px;
+    margin:32px auto 0;
+    padding:0 24px;
+  }
+  .dash-grid{
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:20px;
+    padding:32px;
+  }
+  @media(max-width:720px){.dash-grid{grid-template-columns:1fr;padding:24px;}}
+
+  .ring-wrap{
+    display:flex;
+    align-items:center;
+    gap:24px;
+  }
+  .ring-svg{transform:rotate(-90deg);flex-shrink:0;}
+  .ring-track{fill:none;stroke:rgba(255,255,255,0.08);stroke-width:12;}
+  .ring-fill{
+    fill:none;stroke-width:12;stroke-linecap:round;
+    stroke:url(#ringGrad);
+    transition:stroke-dashoffset 1s cubic-bezier(.2,.8,.2,1);
+  }
+  .ring-pct{
+    font-family:var(--font-display);
+    font-size:34px;
+    font-weight:700;
+  }
+  .ring-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin-top:4px;
+  }
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+  }
+  .stat-tile{
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    border-radius:14px;
+    padding:14px 12px;
+    text-align:center;
+    transition:transform .25s, box-shadow .25s;
+  }
+  .stat-tile:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(139,92,246,0.25);}
+  .stat-num{font-family:var(--font-display);font-size:22px;font-weight:600;}
+  .stat-label{font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-faint);margin-top:4px;}
+
+  .actions{
+    display:flex;
+    gap:12px;
+    margin-top:18px;
+    flex-wrap:wrap;
+    grid-column:1/-1;
+  }
+  button.btn{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:13px;
+    padding:13px 22px;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+    transition:transform .2s, box-shadow .2s;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  button.btn.primary{
+    background:var(--grad);
+    color:#0A0C18;
+  }
+  button.btn.primary:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(139,92,246,0.45);}
+  button.btn.ghost{
+    background:var(--glass-strong);
+    color:var(--text);
+    border:1px solid var(--glass-border);
+  }
+  button.btn.ghost:hover{background:rgba(255,255,255,0.14);transform:translateY(-2px);}
+
+  .ledger{
+    max-width:980px;
+    margin:40px auto;
+    padding:0 24px;
+  }
+  .ledger-title{
+    font-family:var(--font-display);
+    font-size:24px;
+    font-weight:600;
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .ledger-title small{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-faint);
+    letter-spacing:0.08em;
+  }
+
+  .day-card{
+    margin-bottom:12px;
+    overflow:hidden;
+    transition:border-color .3s, box-shadow .3s;
+  }
+  .day-card.complete{border-color:rgba(52,211,153,0.4);}
+  .day-card.today{
+    border-color:rgba(139,92,246,0.55);
+    box-shadow:0 0 0 1px rgba(139,92,246,0.3), 0 0 30px rgba(139,92,246,0.18);
+  }
+
+  .day-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 20px;
+    cursor:pointer;
+    gap:14px;
+    flex-wrap:wrap;
+    user-select:none;
+  }
+  .day-head-left{display:flex;align-items:center;gap:16px;}
+  .day-num{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:18px;
+    width:46px;height:46px;
+    border-radius:14px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    flex-shrink:0;
+    transition:background .3s, color .3s, border-color .3s;
+  }
+  .day-card.complete .day-num{
+    background:linear-gradient(135deg,#34D399,#22D3EE);
+    color:#06170F;
+    border-color:transparent;
+  }
+  .day-title{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;}
+  .day-date{font-family:var(--font-mono);font-size:11.5px;color:var(--text-faint);margin-top:2px;}
+
+  .today-tag{
+    font-family:var(--font-mono);
+    font-size:9.5px;
+    letter-spacing:0.1em;
+    background:var(--grad);
+    color:#0A0C18;
+    padding:3px 9px;
+    border-radius:100px;
+    font-weight:700;
+    animation:pulseGlow 2.2s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{box-shadow:0 0 0 0 rgba(139,92,246,0.5);}
+    50%{box-shadow:0 0 12px 2px rgba(139,92,246,0.35);}
+  }
+
+  .day-badge{
+    font-family:var(--font-mono);
+    font-size:11px;
+    padding:6px 12px;
+    border-radius:100px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    color:var(--text-dim);
+    transition:all .3s;
+  }
+  .day-card.complete .day-badge{
+    background:rgba(52,211,153,0.15);
+    border-color:rgba(52,211,153,0.4);
+    color:var(--good);
+  }
+
+  .chevron{
+    width:20px;height:20px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-faint);
+    transition:transform .3s;
+  }
+  .day-card.open .chevron{transform:rotate(180deg);color:var(--cyan);}
+
+  .day-progress-track{
+    height:6px;
+    width:100%;
+    background:rgba(255,255,255,0.08);
+    border-radius:100px;
+    overflow:hidden;
+    margin:0 20px 14px;
+    width:calc(100% - 40px);
+  }
+  .day-progress-fill{
+    height:100%;
+    border-radius:100px;
+    background:linear-gradient(90deg,#8B5CF6,#22D3EE);
+    width:0%;
+    transition:width .5s cubic-bezier(.2,.8,.2,1);
+  }
+  .day-card.complete .day-progress-fill{
+    background:linear-gradient(90deg,#34D399,#22D3EE);
+  }
+
+  .day-body{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height .4s cubic-bezier(.2,.8,.2,1);
+  }
+  .day-card.open .day-body{max-height:1000px;}
+
+  .day-body-inner{
+    padding:6px 20px 20px;
+    display:grid;
+    gap:10px;
+  }
+
+  .item-row{
+    display:grid;
+    grid-template-columns:30px 1fr 100px 70px;
+    gap:12px;
+    align-items:center;
+    padding:12px 14px;
+    background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.06);
+    border-radius:12px;
+    transition:background .3s, border-color .3s;
+  }
+  .item-row.checked{
+    background:rgba(52,211,153,0.08);
+    border-color:rgba(52,211,153,0.28);
+  }
+  @media(max-width:600px){
+    .item-row{grid-template-columns:26px 1fr;row-gap:8px;}
+    .marks-wrap{grid-column:2;}
+    .max-tag{display:none;}
+  }
+
+  .chk-wrap{position:relative;width:24px;height:24px;}
+  .chk-wrap input{
+    position:absolute;inset:0;
+    opacity:0;cursor:pointer;z-index:2;width:100%;height:100%;
+  }
+  .chk-box{
+    width:24px;height:24px;
+    border-radius:8px;
+    border:2px solid var(--glass-border);
+    background:rgba(255,255,255,0.04);
+    display:flex;align-items:center;justify-content:center;
+    transition:all .25s;
+    pointer-events:none;
+  }
+  .chk-wrap input:checked ~ .chk-box{
+    background:linear-gradient(135deg,#34D399,#22D3EE);
+    border-color:transparent;
+    box-shadow:0 0 12px var(--good-glow);
+  }
+  .chk-box svg{
+    width:14px;height:14px;
+    stroke:#06170F;
+    stroke-width:3;
+    fill:none;
+    stroke-dasharray:20;
+    stroke-dashoffset:20;
+    transition:stroke-dashoffset .3s ease .05s;
+  }
+  .chk-wrap input:checked ~ .chk-box svg{stroke-dashoffset:0;}
+
+  .item-label{
+    font-family:var(--font-mono);
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--text-faint);
+    display:block;
+    margin-bottom:5px;
+  }
+  .item-row input[type=text],.item-row input[type=number]{
+    width:100%;
+    border:1px solid var(--glass-border);
+    background:rgba(255,255,255,0.04);
+    border-radius:8px;
+    padding:8px 10px;
+    font-family:var(--font-body);
+    font-size:13px;
+    color:var(--text);
+    transition:border-color .2s, background .2s;
+  }
+  .item-row input[type=text]::placeholder,.item-row input[type=number]::placeholder{color:var(--text-faint);}
+  .item-row input[type=text]:focus,.item-row input[type=number]:focus{
+    outline:none;
+    border-color:var(--cyan);
+    background:rgba(34,211,238,0.06);
+  }
+  .marks-wrap{display:flex;flex-direction:column;}
+  .max-tag{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--text-faint);
+    text-align:center;
+  }
+
+  footer{
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-faint);
+    padding:40px 20px 10px;
+    letter-spacing:0.04em;
+  }
+  footer .heart{color:var(--pink);}
+
+  .toast{
+    position:fixed;
+    bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(30px);
+    background:rgba(24,26,48,0.95);
+    border:1px solid var(--glass-border);
+    color:var(--text);
+    padding:13px 24px;
+    border-radius:100px;
+    font-family:var(--font-body);
+    font-size:13px;
+    font-weight:500;
+    opacity:0;
+    transition:all .35s cubic-bezier(.2,.8,.2,1);
+    pointer-events:none;
+    z-index:999;
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  ::selection{background:rgba(139,92,246,0.4);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+
+  :focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+
+  ::-webkit-scrollbar{width:10px;}
+  ::-webkit-scrollbar-track{background:var(--bg-deep);}
+  ::-webkit-scrollbar-thumb{background:linear-gradient(var(--violet),var(--cyan));border-radius:10px;}
+</style>
 </head>
 <body>
 
-  <div class="blob-container">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
+<div class="bg-scene"></div>
+<div class="blob blob1"></div>
+<div class="blob blob2"></div>
+<div class="blob blob3"></div>
+<div class="grain"></div>
+
+<header class="hero fade-in">
+  <div class="eyebrow">50-Day Mock Test Sprint</div>
+  <h1 class="name">Rajveer Singh</h1>
+  <p class="hero-sub">4 Maths Sectionals · 1 Full Mock · 1 English Sectional — every single day, no excuses.</p>
+  <div class="hero-dates">
+    <span>START <b>13 JUL 2026</b></span>
+    <span>END <b>31 AUG 2026</b></span>
   </div>
+</header>
 
-  <div class="app-container">
-    
-    <header>
-      <div class="eyebrow">Sprint Framework Matrix</div>
-      <h1 class="gradient-text">Rajveer Singh's 50-Day Mock Tracker</h1>
-      <div class="date-span">13 July 2026 — 31 August 2026</div>
-    </header>
-
-    <section class="dashboard">
-      
-      <div class="glass-panel progress-ring-card">
-        <div class="ring-container">
-          <svg class="ring-svg">
-            <defs>
-              <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#8B5CF6" />
-                <stop offset="100%" stop-color="#22D3EE" />
-              </linearGradient>
-            </defs>
-            <circle class="ring-bg" cx="70" cy="70" r="65"></circle>
-            <circle class="ring-fill" id="overall-ring-fill" cx="70" cy="70" r="65"></circle>
-          </svg>
-          <div class="ring-text" id="overall-percentage-txt">0%</div>
-        </div>
-        <div class="ring-label">Overall Completion</div>
+<div class="dashboard fade-in" style="animation-delay:.1s">
+  <div class="glass dash-grid">
+    <div class="ring-wrap">
+      <svg class="ring-svg" width="120" height="120" viewBox="0 0 120 120">
+        <defs>
+          <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#8B5CF6"/>
+            <stop offset="100%" stop-color="#22D3EE"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="60" cy="60" r="50"></circle>
+        <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="50" stroke-dasharray="314.159" stroke-dashoffset="314.159"></circle>
+      </svg>
+      <div>
+        <div class="ring-pct" id="pctNum">0%</div>
+        <div class="ring-label">Overall completion</div>
       </div>
-
-      <div class="glass-panel stats-grid">
-        <div class="stat-tile">
-          <div class="stat-val" id="stats-days-complete">0</div>
-          <div class="stat-lbl">Days Fully<br>Completed</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-val" id="stats-tasks-ticked">0</div>
-          <div class="stat-lbl">Total Mocks<br>Evaluated</div>
-        </div>
-        <div class="stat-tile">
-          <div class="stat-val" id="stats-streak">0</div>
-          <div class="stat-lbl">Current Daily<br>Streak (Days)</div>
-        </div>
-        
-        <div class="actions-panel">
-          <button class="btn-export" id="btn-export-pdf" aria-label="Export execution timeline data to PDF document format">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Download progress PDF
-          </button>
-        </div>
-      </div>
-
-    </section>
-
-    <section>
-      <h2 class="timeline-title">50-Day Execution Timeline Blueprint</h2>
-      <div class="accordion-list" id="sprint-accordion-target"></div>
-    </section>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-tile"><div class="stat-num" id="statDaysDone">0/50</div><div class="stat-label">Days done</div></div>
+      <div class="stat-tile"><div class="stat-num" id="statTasksDone">0/300</div><div class="stat-label">Tasks ticked</div></div>
+      <div class="stat-tile"><div class="stat-num" id="statStreak">0</div><div class="stat-label">Streak</div></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="downloadBtn">⬇ Download progress PDF</button>
+    </div>
   </div>
+</div>
 
-  <script>
-    // -------------------------------------------------------------
-    // ENGINE SCRIPT CONFIGURATION
-    // -------------------------------------------------------------
-    const START_DATE = new Date(2026, 6, 13); // July 13, 2026
-    const TOTAL_DAYS = 50;
-    const MOCKS_PER_DAY = 6;
-    const LOCAL_STORAGE_KEY = "rajveer_sprint_tracker_v1";
+<div class="ledger">
+  <div class="ledger-title fade-in" style="animation-delay:.15s">
+    <span>Daily Ledger</span>
+    <small>tap a day to expand · tick as you finish</small>
+  </div>
+  <div id="dayList"></div>
+</div>
 
-    let appStorage = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || {};
+<footer>Built for Rajveer Singh's grind <span class="heart">♥</span> — data stored locally in this browser only.</footer>
+<div class="toast" id="toast"></div>
 
-    function saveToStorage() {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appStorage));
-      calculateMetrics();
-    }
+<script>
+const START_DATE = new Date(2026,6,13);
+const TOTAL_DAYS = 50;
+const STORAGE_KEY = 'rajveer_mock_ledger_v1';
 
-    function toggleDayCard(dayNum) {
-      const card = document.getElementById(`day-card-${dayNum}`);
-      if (card) {
-        card.classList.toggle('expanded');
+const SECTIONS = [
+  {key:'m1', label:'Maths Sectional 1', max:50, type:'maths'},
+  {key:'m2', label:'Maths Sectional 2', max:50, type:'maths'},
+  {key:'m3', label:'Maths Sectional 3', max:50, type:'maths'},
+  {key:'m4', label:'Maths Sectional 4', max:50, type:'maths'},
+  {key:'full', label:'Full Mock Test', max:200, type:'full'},
+  {key:'eng', label:'English Sectional', max:50, type:'eng'},
+];
+
+function fmtDate(d){
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+function addDays(date, n){
+  const d = new Date(date);
+  d.setDate(d.getDate()+n);
+  return d;
+}
+function todayMidnight(){
+  const t = new Date();
+  return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+}
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {};
+}
+function saveData(d){ localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
+
+let data = loadData();
+
+function getDay(i){
+  if(!data[i]){
+    data[i] = {};
+    SECTIONS.forEach(s=>{ data[i][s.key] = {name:'', marks:'', checked:false}; });
+  }
+  return data[i];
+}
+function dayCompletion(i){
+  const d = getDay(i);
+  let done=0;
+  SECTIONS.forEach(s=>{ if(d[s.key].checked) done++; });
+  return done;
+}
+function isDayFullyComplete(i){ return dayCompletion(i)===SECTIONS.length; }
+
+function computeOverall(){
+  let totalTicks=0, totalDaysComplete=0;
+  for(let i=0;i<TOTAL_DAYS;i++){
+    const c = dayCompletion(i);
+    totalTicks += c;
+    if(c===SECTIONS.length) totalDaysComplete++;
+  }
+  const totalPossible = TOTAL_DAYS*SECTIONS.length;
+  const pct = Math.round((totalTicks/totalPossible)*100);
+  return {pct, totalTicks, totalPossible, totalDaysComplete};
+}
+function computeStreak(){
+  let streak=0;
+  for(let i=TOTAL_DAYS-1;i>=0;i--){
+    if(isDayFullyComplete(i)) streak++; else break;
+  }
+  if(streak===0){
+    for(let i=TOTAL_DAYS-1;i>=0;i--){
+      if(isDayFullyComplete(i)){
+        let s=0,j=i;
+        while(j>=0 && isDayFullyComplete(j)){s++;j--;}
+        streak=s; break;
       }
     }
+  }
+  return streak;
+}
 
-    function updateField(dayNum, fieldKey, val) {
-      if (!appStorage[dayNum]) appStorage[dayNum] = {};
-      appStorage[dayStorageKey(dayNum, fieldKey)] = val;
-      saveToStorage();
-      updateCardProgressBar(dayNum);
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2400);
+}
+
+const RING_CIRC = 2*Math.PI*50;
+function renderDashboard(){
+  const {pct, totalTicks, totalPossible, totalDaysComplete} = computeOverall();
+  document.getElementById('pctNum').textContent = pct+'%';
+  const offset = RING_CIRC - (pct/100)*RING_CIRC;
+  document.getElementById('ringFill').style.strokeDashoffset = offset;
+  document.getElementById('statDaysDone').textContent = totalDaysComplete+'/'+TOTAL_DAYS;
+  document.getElementById('statTasksDone').textContent = totalTicks+'/'+totalPossible;
+  document.getElementById('statStreak').textContent = computeStreak();
+}
+
+function buildDayCard(i){
+  const date = addDays(START_DATE, i);
+  const dayNum = i+1;
+  const today = todayMidnight();
+  const isToday = date.getTime() === today.getTime();
+  const d = getDay(i);
+
+  const card = document.createElement('div');
+  card.className = 'day-card glass';
+  card.id = 'day-'+i;
+  if(isToday){ card.classList.add('today'); card.classList.add('open'); }
+  if(isDayFullyComplete(i)) card.classList.add('complete');
+
+  const completedCount = dayCompletion(i);
+
+  card.innerHTML = `
+    <div class="day-head" data-idx="${i}">
+      <div class="day-head-left">
+        <div class="day-num">${dayNum}</div>
+        <div>
+          <div class="day-title">Day ${dayNum} ${isToday?'<span class="today-tag">TODAY</span>':''}</div>
+          <div class="day-date">${fmtDate(date)}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="day-badge">${completedCount}/${SECTIONS.length} done</div>
+        <div class="chevron">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 4L7 9L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="day-progress-track"><div class="day-progress-fill" id="dayFill-${i}" style="width:${(completedCount/SECTIONS.length)*100}%"></div></div>
+    <div class="day-body">
+      <div class="day-body-inner" id="body-${i}"></div>
+    </div>
+  `;
+
+  const body = card.querySelector('.day-body-inner');
+  SECTIONS.forEach(s=>{
+    const rec = d[s.key];
+    const row = document.createElement('div');
+    row.className = 'item-row' + (rec.checked ? ' checked':'');
+    row.innerHTML = `
+      <div class="chk-wrap">
+        <input type="checkbox" data-day="${i}" data-key="${s.key}" data-field="checked" ${rec.checked?'checked':''}>
+        <div class="chk-box"><svg viewBox="0 0 14 14"><path d="M2 7L5.5 10.5L12 3"/></svg></div>
+      </div>
+      <div>
+        <label class="item-label">${s.label} — Mock Name${s.type==='maths' ? ' (Year &amp; Shift)':''}</label>
+        <input type="text" placeholder="e.g. ${s.type==='maths' ? 'SSC CGL 2023 Shift 2' : s.type==='full' ? 'SSC CGL Full Mock 12' : 'SSC CGL English Mock 8'}" data-day="${i}" data-key="${s.key}" data-field="name" value="${(rec.name||'').replace(/"/g,'&quot;')}">
+      </div>
+      <div class="marks-wrap">
+        <label class="item-label">Marks</label>
+        <input type="number" step="0.01" data-day="${i}" data-key="${s.key}" data-field="marks" value="${rec.marks||''}">
+      </div>
+      <div class="max-tag">/ ${s.max}</div>
+    `;
+    body.appendChild(row);
+  });
+
+  return card;
+}
+
+function renderList(){
+  const list = document.getElementById('dayList');
+  list.innerHTML = '';
+  for(let i=0;i<TOTAL_DAYS;i++){
+    const card = buildDayCard(i);
+    card.style.animationDelay = (Math.min(i,20)*0.02)+'s';
+    card.classList.add('fade-in');
+    list.appendChild(card);
+  }
+}
+
+function attachEvents(){
+  const list = document.getElementById('dayList');
+
+  list.addEventListener('click', (e)=>{
+    const head = e.target.closest('.day-head');
+    if(head && !e.target.matches('input')){
+      const card = head.closest('.day-card');
+      card.classList.toggle('open');
     }
+  });
 
-    function appStorageKey(dayNum, fieldKey) {
-      return `D${dayNum}_${fieldKey}`;
+  list.addEventListener('input', (e)=>{
+    const el = e.target;
+    if(!el.dataset.day) return;
+    const i = parseInt(el.dataset.day);
+    const key = el.dataset.key;
+    const field = el.dataset.field;
+    const d = getDay(i);
+    if(field === 'checked'){
+      d[key].checked = el.checked;
+      const row = el.closest('.item-row');
+      row.classList.toggle('checked', el.checked);
+      const card = document.getElementById('day-'+i);
+      const c = dayCompletion(i);
+      card.querySelector('.day-badge').textContent = c+'/'+SECTIONS.length+' done';
+      card.classList.toggle('complete', c===SECTIONS.length);
+      const fillEl = document.getElementById('dayFill-'+i);
+      if(fillEl) fillEl.style.width = ((c/SECTIONS.length)*100)+'%';
+    } else {
+      d[key][field] = el.value;
     }
+    saveData(data);
+    renderDashboard();
+  });
+}
 
-    function updateCardProgressBar(dayNum) {
-      let tickedCount = 0;
-      for (let t = 1; t <= MOCKS_PER_DAY; t++) {
-        if (appStorage[`D${dayNum}_T${t}_Done`] === true) tickedCount++;
-      }
-      
-      const pct = Math.round((tickedCount / MOCKS_PER_DAY) * 100);
-      const fillElement = document.getElementById(`mini-fill-${dayNum}`);
-      const txtElement = document.getElementById(`mini-txt-${dayNum}`);
-      const cardElement = document.getElementById(`day-card-${dayNum}`);
-      
-      if (fillElement) fillElement.style.width = `${pct}%`;
-      if (txtElement) txtElement.innerText = `${tickedCount}/${MOCKS_PER_DAY}`;
-      
-      if (cardElement) {
-        if (tickedCount === MOCKS_PER_DAY) {
-          cardElement.classList.add('day-complete');
-        } else {
-          cardElement.classList.remove('day-complete');
-        }
-      }
-    }
+function generatePDF(){
+  const today = todayMidnight();
+  let daysToShow = Math.floor((today - START_DATE) / (1000*60*60*24)) + 1;
+  if(daysToShow < 0) daysToShow = 0;
+  if(daysToShow > TOTAL_DAYS) daysToShow = TOTAL_DAYS;
 
-    function calculateMetrics() {
-      let totalMocksEvaluated = 0;
-      let totalFullyCompletedDays = 0;
-      const totalPossibleTasks = TOTAL_DAYS * MOCKS_PER_DAY;
+  if(daysToShow === 0){
+    toast('Sprint has not started yet — nothing to export.');
+    return;
+  }
 
-      const today = new Date();
-      const todayString = today.toLocaleDateString('en-GB');
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({orientation:'landscape', unit:'pt', format:'a4'});
 
-      // Setup timeline trackers for calculation parameters
-      for (let d = 1; d <= TOTAL_DAYS; d++) {
-        let dayTicked = 0;
-        for (let t = 1; t <= MOCKS_PER_DAY; t++) {
-          if (appStorage[`D${d}_T${t}_Done`] === true) {
-            totalMocksEvaluated++;
-            dayTicked++;
-          }
-        }
-        if (dayTicked === MOCKS_PER_DAY) totalFullyCompletedDays++;
-      }
+  const {pct, totalDaysComplete} = computeOverall();
 
-      // Percentage Circle Calculations
-      const globalPct = totalPossibleTasks > 0 ? Math.round((totalMocksEvaluated / totalPossibleTasks) * 100) : 0;
-      document.getElementById('overall-percentage-txt').innerText = `${globalPct}%`;
-      
-      const circleRadius = 65;
-      const circumference = 2 * Math.PI * circleRadius;
-      const dashOffset = circumference - (globalPct / 100) * circumference;
-      document.getElementById('overall-ring-fill').style.strokeDashoffset = dashOffset;
+  doc.setFillColor(10,12,24);
+  doc.rect(0,0,842,25,'F');
+  doc.setTextColor(237,239,251);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('Rajveer Singh — 50-Day Mock Test Progress', 20, 17);
 
-      // Dashboard Metric Value Updates
-      document.getElementById('stats-days-complete').innerText = totalFullyCompletedDays;
-      document.getElementById('stats-tasks-ticked').innerText = totalMocksEvaluated;
+  doc.setTextColor(20,20,30);
+  doc.setFontSize(10);
+  doc.setFont('helvetica','normal');
+  doc.text(`Report generated: ${fmtDate(new Date())}   |   Sprint: ${fmtDate(START_DATE)} to ${fmtDate(addDays(START_DATE,TOTAL_DAYS-1))}`, 40, 44);
+  doc.text(`Days covered in this report: 1 - ${daysToShow} of ${TOTAL_DAYS}   |   Overall completion so far: ${pct}%   |   Fully completed days: ${totalDaysComplete}`, 40, 58);
 
-      // Realtime Current Streak Calculation Engine
-      let currentStreak = 0;
-      let dayIndexForStreak = 1;
+  const head = [[
+    'Day','Date',
+    'Maths 1 (Name / Marks)','Maths 2 (Name / Marks)',
+    'Maths 3 (Name / Marks)','Maths 4 (Name / Marks)',
+    'Full Mock (Name / Marks)','English (Name / Marks)',
+    'Day %'
+  ]];
 
-      // Find which timeline day index corresponds to today's date
-      for (let i = 0; i < TOTAL_DAYS; i++) {
-        const cDate = new Date(START_DATE);
-        cDate.setDate(START_DATE.getDate() + i);
-        if (cDate.toLocaleDateString('en-GB') === todayString) {
-          dayIndexForStreak = i + 1;
-          break;
-        }
-      }
+  const body = [];
+  for(let i=0;i<daysToShow;i++){
+    const d = getDay(i);
+    const date = addDays(START_DATE, i);
+    const c = dayCompletion(i);
+    const dayPct = Math.round((c/SECTIONS.length)*100);
+    const cell = (key,max)=>{
+      const rec = d[key];
+      const name = rec.name ? rec.name : '—';
+      const marks = rec.marks !== '' && rec.marks !== undefined ? rec.marks : '—';
+      const tick = rec.checked ? '✓' : '✗';
+      return `${name}\n${marks}/${max}  [${tick}]`;
+    };
+    body.push([
+      i+1, fmtDate(date),
+      cell('m1',50), cell('m2',50), cell('m3',50), cell('m4',50),
+      cell('full',200), cell('eng',50),
+      dayPct+'%'
+    ]);
+  }
 
-      // Walk backward starting from today's timeline position to measure consistency
-      for (let d = dayIndexForStreak; d >= 1; d--) {
-        let dayCheckedCount = 0;
-        for (let t = 1; t <= MOCKS_PER_DAY; t++) {
-          if (appStorage[`D${d}_T${t}_Done`] === true) dayCheckedCount++;
-        }
-        // If the day has active evaluations logged, count it inside your daily streak
-        if (dayCheckedCount > 0) {
-          currentStreak++;
-        } else if (d === dayIndexForStreak) {
-          // If today has nothing evaluated yet, check yesterday to keep streak active
-          continue;
-        } else {
-          break;
-        }
-      }
-      document.getElementById('stats-streak').innerText = currentStreak;
-    }
+  doc.autoTable({
+    head, body,
+    startY: 74,
+    styles:{fontSize:7.5, cellPadding:4, valign:'middle'},
+    headStyles:{fillColor:[139,92,246], textColor:[255,255,255]},
+    alternateRowStyles:{fillColor:[243,240,255]},
+    columnStyles:{0:{cellWidth:24},1:{cellWidth:52},8:{cellWidth:32}},
+    theme:'grid'
+  });
 
-    function renderExecutionTimeline() {
-      const targetWrap = document.getElementById('sprint-accordion-target');
-      targetWrap.innerHTML = "";
+  const fname = `Rajveer_Singh_Mock_Progress_Day${daysToShow}.pdf`;
+  doc.save(fname);
+  toast(`PDF exported — ${daysToShow} day(s) included`);
+}
 
-      const today = new Date();
-      const todayString = today.toLocaleDateString('en-GB');
-      let targetTodayElement = null;
+document.getElementById('downloadBtn').addEventListener('click', generatePDF);
 
-      for (let i = 0; i < TOTAL_DAYS; i++) {
-        const dayNum = i + 1;
-        
-        const currentCardDate = new Date(START_DATE);
-        currentCardDate.setDate(START_DATE.getDate() + i);
-        
-        const displayDate = currentCardDate.toLocaleDateString('en-GB', {
-          day: 'numeric', month: 'short', year: 'numeric'
-        });
-        const displayDayOfWeek = currentCardDate.toLocaleDateString('en-GB', { weekday: 'short' });
-        const finalDateLabel = `${displayDate} (${displayDayOfWeek})`;
+renderList();
+attachEvents();
+renderDashboard();
 
-        const isToday = currentCardDate.toLocaleDateString('en-GB') === todayString;
-
-        // Generate Task Panel Content Data Rows
-        let rowsHtml = "";
-        for (let t = 1; t <= MOCKS_PER_DAY; t++) {
-          const valName = appStorage[`D${dayNum}_T${t}_Name`] || "";
-          const valScore = appStorage[`D${dayNum}_T${t}_Score`] || "";
-          const valDone = appStorage[`D${dayNum}_T${t}_Done`] === true;
-
-          rowsHtml += `
-            <div class="task-row">
-              <div class="task-label">Mock Examination ${t}</div>
-              <div class="input-wrapper">
-                <input type="text" value="${escapeHtml(valName)}" placeholder="Enter Target Subject / Test Name" 
-                       oninput="updateField(${dayNum}, 'T${t}_Name', this.value)"
-                       class="field-input">
-              </div>
-              <div class="score-container">
-                <input type="number" value="${valScore}" placeholder="--" 
-                       oninput="updateField(${dayNum}, 'T${t}_Score', this.value)"
-                       class="field-input score-input">
-                <span class="score-max-lbl">PTS</span>
-              </div>
-              <div>
-                <label class="custom-checkbox-container" aria-label="Mark test ${t} as complete">
-                  <input type="checkbox" class="hidden-checkbox" ${valDone ? 'checked' : ''} 
-                         onchange="updateField(${dayNum}, 'T${t}_Done', this.checked)">
-                  <svg class="checkbox-svg" viewBox="0 0 24 24">
-                    <rect class="checkbox-box" x="2" y="2" width="20" height="20"></rect>
-                    <path class="checkbox-tick" d="M6 12l4 4 8-8"></path>
-                  </svg>
-                </label>
-              </div>
-            </div>
-          `;
-        }
-
-        const cardItem = document.createElement('div');
-        cardItem.id = `day-card-${dayNum}`;
-        cardItem.className = `day-card ${isToday ? 'today-highlight expanded' : ''}`;
-        
-        cardItem.innerHTML = `
-          <button class="day-header-btn" onclick="toggleDayCard(${dayNum})" aria-expanded="${isToday}" aria-controls="panel-content-${dayNum}">
-            <div class="day-header-left">
-              <span class="day-number">Day ${String(dayNum).padStart(2, '0')}</span>
-              <span class="day-date">${finalDateLabel}</span>
-              ${isToday ? '<span class="badge-today">TODAY</span>' : ''}
-            </div>
-            <div class="day-progress-wrapper" onclick="event.stopPropagation();">
-              <div class="mini-track">
-                <div class="mini-fill" id="mini-fill-${dayNum}"></div>
-              </div>
-              <div class="mini-txt" id="mini-txt-${dayNum}">0/${MOCKS_PER_DAY}</div>
-            </div>
-            <svg class="chevron-icon" viewBox="0 0 24 24">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </button>
-          
-          <div class="accordion-content" id="panel-content-${dayNum}">
-            <div class="accordion-inner">
-              <div class="tasks-panel-container">
-                ${rowsHtml}
-              </div>
-            </div>
-          </div>
-        `;
-
-        targetWrap.appendChild(cardItem);
-        updateCardProgressBar(dayNum);
-        if (isToday) targetTodayElement = cardItem;
-      }
-
-      // Auto scroll directly viewport targeted center focus onto Today's Card position
-      if (targetTodayElement) {
-        setTimeout(() => {
-          targetTodayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }, 350);
-      }
-    }
-
-    function escapeHtml(text) {
-      if (!text) return '';
-      return text.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-    }
-
-    // -------------------------------------------------------------
-    // ADVANCED DATA ANALYTICS PDF EXPORT ENGINE
-    // -------------------------------------------------------------
-    document.getElementById('btn-export-pdf').addEventListener('click', function () {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF('p', 'pt', 'a4');
-      
-      // Target document brand accent layouts
-      doc.setFillColor(10, 12, 24);
-      doc.rect(0, 0, 595, 842, 'F');
-      
-      doc.setFont("Helvetica", "bold");
-      doc.setFontSize(22);
-      doc.setTextColor(34, 211, 238);
-      doc.text("RAJVEER SINGH - TRACKING PORTAL MATRIX", 40, 60);
-      
-      doc.setFont("Helvetica", "normal");
-      doc.setFontSize(10);
-      doc.setTextColor(156, 163, 175);
-      doc.text(`Generated Blueprint Schedule: 13 July 2026 — 31 August 2026  |  Exported: ${new Date().toLocaleDateString('en-GB')}`, 40, 80);
-      
-      // Calculate active metrics data for printing overview table summaries
-      let evaluatedCounter = 0;
-      let loggedTableRowsData = [];
-      
-      for (let d = 1; d <= TOTAL_DAYS; d++) {
-        let currentCardDate = new Date(START_DATE);
-        currentCardDate.setDate(START_DATE.getDate() + (d - 1));
-        const cleanDateLabel = currentCardDate.toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
-
-        for (let t = 1; t <= MOCKS_PER_DAY; t++) {
-          const testName = appStorage[`D${d}_T${t}_Name`] || "";
-          const testScore = appStorage[`D${d}_T${t}_Score`] || "";
-          const isDone = appStorage[`D${d}_T${t}_Done`] === true;
-          
-          if (testName || testScore || isDone) {
-            if (isDone) evaluatedCounter++;
-            loggedTableRowsData.push([
-              `Day ${d} (${cleanDateLabel})`,
-              `Mock Exam ${t}`,
-              testName || "Unnamed Study Session Slot",
-              testScore ? `${testScore} PTS` : "Not Scored",
-              isDone ? "COMPLETED" : "INCOMPLETE"
-            ]);
-          }
-        }
-      }
-
-      if (loggedTableRowsData.length === 0) {
-        doc.setFontSize(14);
-        doc.setTextColor(244, 114, 182);
-        doc.text("No log data entries filled across your timeline yet.", 40, 140);
-        doc.save("Rajveer_Sprint_Blank_Blueprint.pdf");
-        return;
-      }
-
-      doc.autoTable({
-        startY: 110,
-        head: [['Timeline Phase', 'Task Slot', 'Evaluation Subject / Topic Name', 'Logged Score', 'Status']],
-        body: loggedTableRowsData,
-        theme: 'grid',
-        headStyles: { fillOpacity: 0.9, fillColor: [139, 92, 246], textColor: [255, 255, 255], fontStyle: 'bold' },
-        bodyStyles: { fillColor: [20, 24, 46], textColor: [243, 244, 246] },
-        alternateRowStyles: { fillColor: [30, 37, 68] },
-        styles: { borderColor: [255, 255, 255, 0.08], fontSize: 9 },
-        margin: { left: 40, right: 40 }
-      });
-
-      doc.save("Rajveer_Sprint_Performance_Report.pdf");
-    });
-
-    // Launch Application Core Engine Runtime
-    renderExecutionTimeline();
-    calculateMetrics();
-  </script>
+window.addEventListener('load', ()=>{
+  const today = todayMidnight();
+  const diffDays = Math.floor((today - START_DATE)/(1000*60*60*24));
+  if(diffDays>=0 && diffDays<TOTAL_DAYS){
+    const el = document.getElementById('day-'+diffDays);
+    if(el) setTimeout(()=>el.scrollIntoView({behavior:'smooth', block:'center'}), 400);
+  }
+});
+</script>
 </body>
 </html>
